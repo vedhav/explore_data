@@ -10,7 +10,7 @@ library(tidyverse)
 library(corrplot)
 library(colourpicker)
 
-bodyFontSize <<- "12px"
+bodyFontSize <<- "15px"
 colorScheme <<- c("#DE6666", "#5DBDC4", "#E8E561", "#7CC33D", "#548094", "#343434")
 correlationMethods <- c("circle", "square", "ellipse", "number", "shade", "color", "pie")
 correlationTypes <- c("full", "lower", "upper")
@@ -64,12 +64,12 @@ data_source_ui <- bs4TabItem(
 				column(
 					12,
 					HTML(
-						'Upload your own data to analyze it!'
+						'Upload your own data to analyze it! or'
 					),
 					downloadButton("sample_data_download", "download sample data")
 				),
 				column(
-					12, style = "margin-top: 10vh",
+					12, style = "margin-top: 2vh",
 					fileInput(
 						"data_source_input_file",
 						"Upload your file or drag and drop it here",
@@ -101,6 +101,55 @@ summary_ui <- bs4TabItem(
 					column(2, colourInput("corr_color1", "Negative color", "#AD2D2D")),
 					column(2, colourInput("corr_color2", "Positive color", "#0B438C")),
 					column(12, uiOutput("correlation_plot_ui"))
+				)
+			)
+		)
+	)	
+)
+
+plots_ui <- bs4TabItem(
+	tabName = "plots_tab",
+	tags$div(
+		fluidPage(
+			fluidRow(
+				column(12, align = "center", style = "font-size: 20px;", "Plots")
+			),
+			bs4TabCard(
+				title = "Choose your plot type and parameters",
+				elevation = 2,
+				id = "tabcard1",
+				width = 12,
+				collapsible = FALSE, 
+				closable = FALSE,
+				bs4TabPanel(
+					tabName = "Scatter",
+					active = TRUE,
+					fluidRow(
+						column(3, uiOutput("plots_tab_scatter_x_ui")),
+						column(3, uiOutput("plots_tab_scatter_y_ui")),
+						column(3, uiOutput("plots_tab_scatter_color_ui")),
+						column(3, style = "margin-top: 35px;", uiOutput("plots_tab_scatter_checkbox_ui")),
+						column(12, plotlyOutput("scatter_plot"))
+					)
+				),
+				bs4TabPanel(
+					tabName = "Bar",
+					active = FALSE,
+					fluidRow(
+						column(4, uiOutput("plots_tab_bar_x_ui")),
+						column(4, uiOutput("plots_tab_bar_y_ui")),
+						column(4, uiOutput("plots_tab_bar_color_ui")),
+						column(12, plotlyOutput("bar_plot"))
+					)
+				),
+				bs4TabPanel(
+					tabName = "Tab 3",
+					active = FALSE,
+					fluidRow(
+						column(4, uiOutput("plots_tab_tab3_x_ui")),
+						column(4, uiOutput("plots_tab_tab3_y_ui")),
+						column(4, uiOutput("plots_tab_tab3_color_ui"))
+					)
 				)
 			)
 		)
@@ -172,15 +221,20 @@ ui = tags$div(
 				)
 			),
 			body = bs4DashBody(
-				bs4TabItems(data_source_ui, summary_ui)
+				bs4TabItems(data_source_ui, summary_ui, plots_ui)
 			)
 		)
 	)
 )
 
 server = function(input, output, session) {
-	analysisData <- data.frame()
-	output$sample_data_download <- downloadHandler(  # downloads data
+	# analysisData <- data.frame()
+	analysisData <- read.csv("mtcars.csv")
+	numericAnalysisData <- data.frame()
+	factorAnalysisData <- data.frame()
+	numericColumnNames <- NULL
+	factorColumnNames <- NULL
+	output$sample_data_download <- downloadHandler(
 		filename = function() {
 			"sample_data.csv"
 		},
@@ -191,8 +245,33 @@ server = function(input, output, session) {
 	observeEvent(input$data_source_input_file, {
 		inFile <- input$data_source_input_file
 		analysisData <<- read.csv(inFile$datapath,stringsAsFactors = FALSE, header = TRUE)
+		numericAnalysisData <<- analysisData %>% select_if(is.numeric)
+		numericColumnNames <<- names(numericAnalysisData)
+		factorColumnNames <<- setdiff(names(analysisData), numericColumnNames)
+		factorAnalysisData <<- analysisData %>% select(factorColumnNames)
 		output$input_data_table <- renderDT({
 			datatable(analysisData, rownames = FALSE, options = list(dom = 't'))
+		})
+		output$plots_tab_scatter_x_ui <- renderUI({
+			selectInput("plots_tab_scatter_x", "Select X Axis", numericColumnNames)
+		})
+		output$plots_tab_scatter_y_ui <- renderUI({
+			selectInput("plots_tab_scatter_y", "Select Y Axis", numericColumnNames)
+		})
+		output$plots_tab_scatter_color_ui <- renderUI({
+			selectInput("plots_tab_scatter_color", "Select Color Axis", c(factorColumnNames, numericColumnNames))
+		})
+		output$plots_tab_scatter_checkbox_ui <- renderUI({
+			prettySwitch("plots_tab_scatter_checkbox", "Factorize color axis input?", slim = TRUE)
+		})
+		output$plots_tab_bar_x_ui <- renderUI({
+			selectInput("plots_tab_bar_x", "Select X Axis", factorColumnNames)
+		})
+		output$plots_tab_bar_y_ui <- renderUI({
+			selectInput("plots_tab_bar_y", "Select Y Axis", numericColumnNames)
+		})
+		output$plots_tab_bar_color_ui <- renderUI({
+			selectInput("plots_tab_bar_color", "Select Color Axis", factorColumnNames)
 		})
 		data_input__trigger$trigger()
 	})
@@ -202,7 +281,6 @@ server = function(input, output, session) {
 			# popUpWindow("Either the data you uploaded is empty or you forgot to upload the file in the 'Data Source' tab")
 			return(textPlot())
 		}
-		numericAnalysisData <- analysisData %>% select_if(is.numeric)
 		if (nrow(numericAnalysisData) == 0) {
 			popUpWindow("Your data does not does not contain any numeric columns")
 			return(textPlot())
@@ -216,6 +294,52 @@ server = function(input, output, session) {
 	})
 	output$correlation_plot_ui <- renderUI({
 		plotOutput("correlation_plot", height = paste0(input$corr_width, "px"))
+	})
+	output$scatter_plot <- renderPlotly({
+		req(input$plots_tab_scatter_x)
+		req(input$plots_tab_scatter_y)
+		req(input$plots_tab_scatter_color)
+		if (nrow(analysisData) == 0) {
+			return(ggplotly(textPlot()))
+		}
+		if (input$plots_tab_scatter_checkbox) {
+			color_value <- as.factor(analysisData[, input$plots_tab_scatter_color])
+		} else {
+			color_value <- analysisData[, input$plots_tab_scatter_color]
+		}
+		plot_ly(
+			analysisData,
+			x = analysisData[, input$plots_tab_scatter_x],
+			y = analysisData[, input$plots_tab_scatter_y],
+			color = color_value, marker = list(size = 15),
+			type = 'scatter', mode = 'markers', hoverlabel = list(namelength = -1),
+			textposition = 'top center', cliponaxis = FALSE
+		) %>%
+		layout(
+			xaxis = list(title = input$plots_tab_scatter_x),
+			yaxis = list(title = input$plots_tab_scatter_y),
+			legend = list(y = 0.5, yanchor = "center")
+		)
+	})
+	output$bar_plot <- renderPlotly({
+		req(input$plots_tab_bar_x)
+		req(input$plots_tab_bar_y)
+		req(input$plots_tab_bar_color)
+		if (nrow(analysisData) == 0) {
+			return(ggplotly(textPlot()))
+		}
+		plot_ly(
+			data = analysisData,
+			x = analysisData[, input$plots_tab_bar_x],
+			y = analysisData[, input$plots_tab_bar_y],
+			color = analysisData[, input$plots_tab_bar_color],
+			type = "bar"
+		) %>% layout(
+			xaxis = list(title = input$plots_tab_bar_x),
+			yaxis = list(title = input$plots_tab_bar_y),
+			legend = list(y = 0.5, yanchor = "center"),
+			barmode = "stack"
+		)
 	})
 }
 
