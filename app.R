@@ -86,11 +86,8 @@ summary_ui <- bs4TabItem(
 	tabName = "summary_tab",
 	tags$div(
 		fluidPage(
-			fluidRow(
-				column(12, align = "center", style = "font-size: 20px;", "Summary")
-			),
 			bs4Card(
-				title = "Correlation Plot", width = 12,
+				title = "Correlation Plot", width = 12, status = "secondary",
 				closable = TRUE, collapsible = TRUE,
 				fluidRow(
 					align = "center",
@@ -111,14 +108,14 @@ plots_ui <- bs4TabItem(
 	tabName = "plots_tab",
 	tags$div(
 		fluidPage(
-			fluidRow(
-				column(12, align = "center", style = "font-size: 20px;", "Plots")
-			),
 			bs4TabCard(
+				id = "plots_tab_box_1",
 				title = "Choose your plot type and parameters",
+				side = "right",
 				elevation = 2,
-				id = "tabcard1",
 				width = 12,
+				status = "secondary",
+				tabStatus = "dark",
 				collapsible = FALSE, 
 				closable = FALSE,
 				bs4TabPanel(
@@ -143,7 +140,7 @@ plots_ui <- bs4TabItem(
 					)
 				),
 				bs4TabPanel(
-					tabName = "Tab 3",
+					tabName = "Line",
 					active = FALSE,
 					fluidRow(
 						column(4, uiOutput("plots_tab_tab3_x_ui")),
@@ -228,8 +225,8 @@ ui = tags$div(
 )
 
 server = function(input, output, session) {
-	# analysisData <- data.frame()
-	analysisData <- read.csv("mtcars.csv")
+	analysisData <- data.frame()
+	# analysisData <- read.csv("mtcars.csv")
 	numericAnalysisData <- data.frame()
 	factorAnalysisData <- data.frame()
 	numericColumnNames <- NULL
@@ -278,7 +275,7 @@ server = function(input, output, session) {
 	output$correlation_plot <- renderPlot({
 		data_input__trigger$depend()
 		if (nrow(analysisData) == 0) {
-			# popUpWindow("Either the data you uploaded is empty or you forgot to upload the file in the 'Data Source' tab")
+			popUpWindow("Either the data you uploaded is empty or you forgot to upload the file in the 'Data Source' tab")
 			return(textPlot())
 		}
 		if (nrow(numericAnalysisData) == 0) {
