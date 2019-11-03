@@ -8,12 +8,49 @@ library(plotly)
 library(psych)
 library(tidyverse)
 library(corrplot)
+library(colourpicker)
 
 bodyFontSize <<- "12px"
 colorScheme <<- c("#DE6666", "#5DBDC4", "#E8E561", "#7CC33D", "#548094", "#343434")
 correlationMethods <- c("circle", "square", "ellipse", "number", "shade", "color", "pie")
 correlationTypes <- c("full", "lower", "upper")
 correlationOrders <- c("original", "AOE", "FPC", "hclust", "alphabet")
+
+makeReactiveTrigger <<- function() {
+	rv <- reactiveValues(a = 0)
+	list(
+		depend = function() {
+			rv$a
+			invisible()
+		},
+		trigger = function() {
+			rv$a <- isolate(rv$a + 1)
+		}
+	)
+}
+
+data_input__trigger <- makeReactiveTrigger()
+
+popUpWindow <- function (popUpText, title = NULL, footer = NULL, easyClose = TRUE,
+	color = "#333", bg_color = "#f7f7f7") {
+	tags$div(
+		class = "showmodal",
+		showModal(
+			modalDialog(
+				style = paste0('color: ', color, '; background-color: ', bg_color),
+				title = title, tags$div(HTML(popUpText), align = "center"), footer = footer, easyClose = easyClose
+			)
+		)
+	)
+}
+
+textPlot <- function(text = "No data avaliable", color = "#000000") {
+	plot <- ggplot()+
+		geom_text(aes(x = 0, y = 0, label = text), size = 6, color = color) +
+		labs(x = '', y = '') +
+		theme(panel.background = element_blank(), axis.text = element_blank(), axis.ticks = element_blank(), axis.line = element_blank())
+	return(plot)
+}
 
 data_source_ui <- bs4TabItem(
 	tabName = "data_source_tab",
@@ -27,17 +64,16 @@ data_source_ui <- bs4TabItem(
 				column(
 					12,
 					HTML(
-						'Upload your own data to analyze it, click 
-						<a id="asdf" href="#" class="action-button">here</a>
-						 to download a sample data'
-					)
+						'Upload your own data to analyze it!'
+					),
+					downloadButton("sample_data_download", "download sample data")
 				),
 				column(
 					12, style = "margin-top: 10vh",
 					fileInput(
 						"data_source_input_file",
 						"Upload your file or drag and drop it here",
-						accept = c(".xlsx", ".csv")
+						accept = c(".csv")
 					)
 				),
 				column(12, DTOutput("input_data_table"))
@@ -59,6 +95,8 @@ summary_ui <- bs4TabItem(
 				column(2, selectInput("corr_type", "Type", correlationTypes)),
 				column(2, selectInput("corr_order", "Order", correlationOrders)),
 				column(2, sliderInput("corr_width", "Plot Height", value = 400, min = 200, max = 1000)),
+				column(2, colourInput("corr_color1", "Negative color", "#AD2D2D")),
+				column(2, colourInput("corr_color2", "Positive color", "#0B438C")),
 				column(12, uiOutput("correlation_plot_ui"))
 			)
 		)
@@ -138,17 +176,38 @@ ui = tags$div(
 
 server = function(input, output, session) {
 	analysisData <- data.frame()
-	output$input_data_table <- renderDT({
-		analysisData <<- read.csv("mtcars.csv")
-		datatable(
-			analysisData
-		)
+	output$sample_data_download <- downloadHandler(  # downloads data
+		filename = function() {
+			"sample_data.csv"
+		},
+		content = function(file) {
+			write.csv(read.csv("mtcars.csv"), file, row.names = FALSE)
+		}
+	)
+	observeEvent(input$data_source_input_file, {
+		inFile <- input$data_source_input_file
+		analysisData <<- read.csv(inFile$datapath,stringsAsFactors = FALSE, header = TRUE)
+		output$input_data_table <- renderDT({
+			datatable(analysisData, rownames = FALSE, options = list(dom = 't'))
+		})
+		data_input__trigger$trigger()
 	})
 	output$correlation_plot <- renderPlot({
+		data_input__trigger$depend()
+		if (nrow(analysisData) == 0) {
+			popUpWindow("Either the data you uploaded is empty or you forgot to upload the file in the 'Data Source' tab")
+			return(textPlot())
+		}
 		numericAnalysisData <- analysisData %>% select_if(is.numeric)
+		if (nrow(numericAnalysisData) == 0) {
+			popUpWindow("Your data does not does not contain any numeric columns")
+			return(textPlot())
+		}
+		color_palette <- colorRampPalette(c(input$corr_color1, "#ffffff", input$corr_color2))
 		corrplot(
 		    cor(numericAnalysisData), method = input$corr_method,
-		    type = input$corr_type, order = input$corr_order
+		    type = input$corr_type, order = input$corr_order,
+		    col = color_palette(100), tl.col = "black"
 		)
 	})
 	output$correlation_plot_ui <- renderUI({
