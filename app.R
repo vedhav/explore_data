@@ -89,15 +89,19 @@ summary_ui <- bs4TabItem(
 			fluidRow(
 				column(12, align = "center", style = "font-size: 20px;", "Summary")
 			),
-			fluidRow(
-				align = "center",
-				column(2, selectInput("corr_method", "Method", correlationMethods)),
-				column(2, selectInput("corr_type", "Type", correlationTypes)),
-				column(2, selectInput("corr_order", "Order", correlationOrders)),
-				column(2, sliderInput("corr_width", "Plot Height", value = 400, min = 200, max = 1000)),
-				column(2, colourInput("corr_color1", "Negative color", "#AD2D2D")),
-				column(2, colourInput("corr_color2", "Positive color", "#0B438C")),
-				column(12, uiOutput("correlation_plot_ui"))
+			bs4Card(
+				title = "Correlation Plot", width = 12,
+				closable = TRUE, collapsible = TRUE,
+				fluidRow(
+					align = "center",
+					column(2, selectInput("corr_method", "Method", correlationMethods)),
+					column(2, selectInput("corr_type", "Type", correlationTypes)),
+					column(2, selectInput("corr_order", "Order", correlationOrders)),
+					column(2, sliderInput("corr_width", "Plot Height", value = 400, min = 200, max = 1000)),
+					column(2, colourInput("corr_color1", "Negative color", "#AD2D2D")),
+					column(2, colourInput("corr_color2", "Positive color", "#0B438C")),
+					column(12, uiOutput("correlation_plot_ui"))
+				)
 			)
 		)
 	)	
@@ -195,7 +199,7 @@ server = function(input, output, session) {
 	output$correlation_plot <- renderPlot({
 		data_input__trigger$depend()
 		if (nrow(analysisData) == 0) {
-			popUpWindow("Either the data you uploaded is empty or you forgot to upload the file in the 'Data Source' tab")
+			# popUpWindow("Either the data you uploaded is empty or you forgot to upload the file in the 'Data Source' tab")
 			return(textPlot())
 		}
 		numericAnalysisData <- analysisData %>% select_if(is.numeric)
