@@ -91,12 +91,24 @@ summary_ui <- bs4TabItem(
 				closable = TRUE, collapsible = TRUE,
 				fluidRow(
 					align = "center",
-					column(12, verbatimTextOutput("factor_columns_summary_general")),
-					column(2, uiOutput("factor_pie_chart_column_ui")),
-					column(10, plotlyOutput("factor_pie_chart")),
-					column(12, DTOutput("numeric_columns_summary_general")),
-					column(2, uiOutput("numeric_line_chart_column_ui")),
-					column(10, plotlyOutput("numeric_line_chart"))
+					tags$div(
+						style = "width:100%; border-width:2px; border-style:solid; border-color:#C1C5C7;",
+						column(12, tags$h3("Factor Variables")),
+						column(12, verbatimTextOutput("factor_columns_summary_general")),
+						fluidRow(
+							column(2, style = "padding-left: 20px;", uiOutput("factor_pie_chart_column_ui")),
+							column(10, style = "padding-right: 10vw;", plotlyOutput("factor_pie_chart"))
+						)
+					),
+					tags$div(
+						style = "margin-top: 5vh; width:100%; border-width:2px; border-style:solid; border-color:#C1C5C7;",
+						column(12, tags$h3("Numeric Variables")),
+						column(12, DTOutput("numeric_columns_summary_general")),
+						fluidRow(
+							column(2, style = "padding-left: 20px;", uiOutput("numeric_line_chart_column_ui")),
+							column(10, style = "padding-right: 20px;", plotlyOutput("numeric_line_chart"))
+						)
+					)
 				)
 			),
 			bs4Card(
@@ -156,9 +168,10 @@ plots_ui <- bs4TabItem(
 					tabName = "Line",
 					active = FALSE,
 					fluidRow(
-						column(4, uiOutput("plots_tab_tab3_x_ui")),
-						column(4, uiOutput("plots_tab_tab3_y_ui")),
-						column(4, uiOutput("plots_tab_tab3_color_ui"))
+						column(4, uiOutput("plots_tab_line_x_ui")),
+						column(4, uiOutput("plots_tab_line_y_ui")),
+						column(4, uiOutput("plots_tab_line_color_ui")),
+						column(12, plotlyOutput("line_plot"))
 					)
 				)
 			)
@@ -245,40 +258,49 @@ ui = tags$div(
 )
 
 server = function(input, output, session) {
-	# analysisData <- read.csv("mtcars.csv")
-	# numericAnalysisData <<- analysisData %>% select_if(is.numeric)
-	# numericColumnNames <<- names(numericAnalysisData)
-	# factorColumnNames <<- setdiff(names(analysisData), numericColumnNames)
-	# factorAnalysisData <<- analysisData %>% select(factorColumnNames)
-	# output$input_data_table <- renderDT({
-	# 	datatable(analysisData, rownames = FALSE, options = list(dom = 't'))
-	# })
-	# output$plots_tab_scatter_x_ui <- renderUI({
-	# 	selectInput("plots_tab_scatter_x", "Select X Axis", numericColumnNames)
-	# })
-	# output$plots_tab_scatter_y_ui <- renderUI({
-	# 	selectInput("plots_tab_scatter_y", "Select Y Axis", numericColumnNames)
-	# })
-	# output$plots_tab_scatter_color_ui <- renderUI({
-	# 	selectInput("plots_tab_scatter_color", "Select Color Axis", c(factorColumnNames, numericColumnNames))
-	# })
-	# output$plots_tab_scatter_checkbox_ui <- renderUI({
-	# 	prettySwitch("plots_tab_scatter_checkbox", "Factorize color axis input?", slim = TRUE)
-	# })
-	# output$plots_tab_bar_x_ui <- renderUI({
-	# 	selectInput("plots_tab_bar_x", "Select X Axis", factorColumnNames)
-	# })
-	# output$plots_tab_bar_y_ui <- renderUI({
-	# 	selectInput("plots_tab_bar_y", "Select Y Axis", numericColumnNames)
-	# })
-	# output$plots_tab_bar_color_ui <- renderUI({
-	# 	selectInput("plots_tab_bar_color", "Select Color Axis", factorColumnNames)
-	# })
-	analysisData <- data.frame()
-	numericAnalysisData <- data.frame()
-	factorAnalysisData <- data.frame()
-	numericColumnNames <- NULL
-	factorColumnNames <- NULL
+	analysisData <- read.csv("mtcars.csv")
+	numericAnalysisData <<- analysisData %>% select_if(is.numeric)
+	numericColumnNames <<- names(numericAnalysisData)
+	factorColumnNames <<- setdiff(names(analysisData), numericColumnNames)
+	factorAnalysisData <<- analysisData %>% select(factorColumnNames)
+	output$input_data_table <- renderDT({
+		datatable(analysisData, rownames = FALSE, options = list(dom = 't'))
+	})
+	output$plots_tab_scatter_x_ui <- renderUI({
+		selectInput("plots_tab_scatter_x", "Select X Axis", numericColumnNames)
+	})
+	output$plots_tab_scatter_y_ui <- renderUI({
+		selectInput("plots_tab_scatter_y", "Select Y Axis", numericColumnNames)
+	})
+	output$plots_tab_scatter_color_ui <- renderUI({
+		selectInput("plots_tab_scatter_color", "Select Color Axis", c(factorColumnNames, numericColumnNames))
+	})
+	output$plots_tab_scatter_checkbox_ui <- renderUI({
+		prettySwitch("plots_tab_scatter_checkbox", "Factorize color axis input?", slim = TRUE)
+	})
+	output$plots_tab_bar_x_ui <- renderUI({
+		selectInput("plots_tab_bar_x", "Select X Axis", factorColumnNames)
+	})
+	output$plots_tab_bar_y_ui <- renderUI({
+		selectInput("plots_tab_bar_y", "Select Y Axis", numericColumnNames)
+	})
+	output$plots_tab_bar_color_ui <- renderUI({
+		selectInput("plots_tab_bar_color", "Select Color Axis", factorColumnNames)
+	})
+	output$plots_tab_line_x_ui <- renderUI({
+		selectInput("plots_tab_line_x", "Select X Axis", numericColumnNames)
+	})
+	output$plots_tab_line_y_ui <- renderUI({
+		selectInput("plots_tab_line_y", "Select Y Axis", numericColumnNames)
+	})
+	output$plots_tab_line_color_ui <- renderUI({
+		selectInput("plots_tab_line_color", "Select Color Axis", numericColumnNames)
+	})
+	# analysisData <- data.frame()
+	# numericAnalysisData <- data.frame()
+	# factorAnalysisData <- data.frame()
+	# numericColumnNames <- NULL
+	# factorColumnNames <- NULL
 	output$sample_data_download <- downloadHandler(
 		filename = function() {
 			"sample_data.csv"
@@ -318,6 +340,15 @@ server = function(input, output, session) {
 		output$plots_tab_bar_color_ui <- renderUI({
 			selectInput("plots_tab_bar_color", "Select Color Axis", factorColumnNames)
 		})
+		output$plots_tab_line_x_ui <- renderUI({
+			selectInput("plots_tab_line_x", "Select X Axis", numericColumnNames)
+		})
+		output$plots_tab_line_y_ui <- renderUI({
+			selectInput("plots_tab_line_y", "Select Y Axis", numericColumnNames)
+		})
+		output$plots_tab_line_color_ui <- renderUI({
+			selectInput("plots_tab_line_color", "Select Color Axis", factorColumnNames)
+		})
 		data_input__trigger$trigger()
 	})
 
@@ -343,7 +374,8 @@ server = function(input, output, session) {
 		}
 		plotData <- factorAnalysisData %>% group_by(factor_variable = factorAnalysisData[[input$factor_pie_chart_column]]) %>%
 			summarise(count = n())
-		plot_ly(data = plotData, labels = ~factor_variable, values = ~count, type = 'pie', hole = 0.5)
+		plot_ly(data = plotData, labels = ~factor_variable, values = ~count, type = 'pie', hole = 0.5) %>%
+			layout(legend = list(y = 0.5, yanchor = "center"))
 	})
 	output$numeric_columns_summary_general <- renderDT({
 		data_input__trigger$depend()
@@ -379,7 +411,8 @@ server = function(input, output, session) {
 		selectData <- numericAnalysisData %>% select(input$numeric_line_chart_column)
 		plotData <- selectData %>% gather() %>%
 			mutate(rows = rep(c(1:nrow(selectData)), ncol(selectData)))
-		plot_ly(data = plotData, x = ~rows, y = ~value, color = ~key, type = "scatter", mode = "lines+markers")
+		plot_ly(data = plotData, x = ~rows, y = ~value, color = ~key, type = "scatter", mode = "lines+markers") %>%
+			layout(legend = list(y = 0.5, yanchor = "center"))
 	})
 
 	output$correlation_plot <- renderPlot({
@@ -446,6 +479,23 @@ server = function(input, output, session) {
 			yaxis = list(title = input$plots_tab_bar_y),
 			legend = list(y = 0.5, yanchor = "center"),
 			barmode = "stack"
+		)
+	})
+	output$line_plot <- renderPlotly({
+		req(input$plots_tab_line_x)
+		req(input$plots_tab_line_y)
+		req(input$plots_tab_line_color)
+		if (nrow(analysisData) == 0) {
+			return(ggplotly(textPlot()))
+		}
+		plotData <- analysisData %>% arrange(analysisData[[input$plots_tab_line_x]])
+		plot_ly(
+			data = plotData, x = plotData[, input$plots_tab_line_x],
+			y = plotData[, input$plots_tab_line_y], color = plotData[, input$plots_tab_line_color],
+			type = "scatter", mode = "markers", name = "scatter_point", marker = list(size = 10)
+		) %>% add_lines(name = "line_trace") %>% layout(
+			xaxis = list(title = input$plots_tab_line_x),
+			yaxis = list(title = input$plots_tab_line_y)
 		)
 	})
 }
