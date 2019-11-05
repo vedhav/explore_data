@@ -155,7 +155,14 @@ plots_ui <- bs4TabItem(
 
 ui = tags$div(
 	tags$head(
-		tags$link(rel = "shortcut icon", type = "image/png", href = "vedha_space.png")
+		tags$link(rel = "shortcut icon", type = "image/png", href = "vedha_space.png"),
+		tags$script(
+			"window.dataLayer = window.dataLayer || [];
+			function gtag(){dataLayer.push(arguments);}
+			gtag('js', new Date());
+			gtag('config', 'UA-151532997-2');",
+			src = 'https://www.googletagmanager.com/gtag/js?id=UA-151532997-2'
+		)
 	),
 	useShinyjs(),
 	useShinyalert(),
@@ -284,9 +291,9 @@ server = function(input, output, session) {
 		}
 		color_palette <- colorRampPalette(c(input$corr_color1, "#ffffff", input$corr_color2))
 		corrplot(
-		    cor(numericAnalysisData), method = input$corr_method,
-		    type = input$corr_type, order = input$corr_order,
-		    col = color_palette(100), tl.col = "black"
+			cor(numericAnalysisData), method = input$corr_method,
+			type = input$corr_type, order = input$corr_order,
+			col = color_palette(100), tl.col = "black"
 		)
 	})
 	output$correlation_plot_ui <- renderUI({
