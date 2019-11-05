@@ -245,40 +245,40 @@ ui = tags$div(
 )
 
 server = function(input, output, session) {
-	# analysisData <- data.frame()
-	analysisData <- read.csv("mtcars.csv")
-	numericAnalysisData <<- analysisData %>% select_if(is.numeric)
-	numericColumnNames <<- names(numericAnalysisData)
-	factorColumnNames <<- setdiff(names(analysisData), numericColumnNames)
-	factorAnalysisData <<- analysisData %>% select(factorColumnNames)
-	output$input_data_table <- renderDT({
-		datatable(analysisData, rownames = FALSE, options = list(dom = 't'))
-	})
-	output$plots_tab_scatter_x_ui <- renderUI({
-		selectInput("plots_tab_scatter_x", "Select X Axis", numericColumnNames)
-	})
-	output$plots_tab_scatter_y_ui <- renderUI({
-		selectInput("plots_tab_scatter_y", "Select Y Axis", numericColumnNames)
-	})
-	output$plots_tab_scatter_color_ui <- renderUI({
-		selectInput("plots_tab_scatter_color", "Select Color Axis", c(factorColumnNames, numericColumnNames))
-	})
-	output$plots_tab_scatter_checkbox_ui <- renderUI({
-		prettySwitch("plots_tab_scatter_checkbox", "Factorize color axis input?", slim = TRUE)
-	})
-	output$plots_tab_bar_x_ui <- renderUI({
-		selectInput("plots_tab_bar_x", "Select X Axis", factorColumnNames)
-	})
-	output$plots_tab_bar_y_ui <- renderUI({
-		selectInput("plots_tab_bar_y", "Select Y Axis", numericColumnNames)
-	})
-	output$plots_tab_bar_color_ui <- renderUI({
-		selectInput("plots_tab_bar_color", "Select Color Axis", factorColumnNames)
-	})
-	# numericAnalysisData <- data.frame()
-	# factorAnalysisData <- data.frame()
-	# numericColumnNames <- NULL
-	# factorColumnNames <- NULL
+	# analysisData <- read.csv("mtcars.csv")
+	# numericAnalysisData <<- analysisData %>% select_if(is.numeric)
+	# numericColumnNames <<- names(numericAnalysisData)
+	# factorColumnNames <<- setdiff(names(analysisData), numericColumnNames)
+	# factorAnalysisData <<- analysisData %>% select(factorColumnNames)
+	# output$input_data_table <- renderDT({
+	# 	datatable(analysisData, rownames = FALSE, options = list(dom = 't'))
+	# })
+	# output$plots_tab_scatter_x_ui <- renderUI({
+	# 	selectInput("plots_tab_scatter_x", "Select X Axis", numericColumnNames)
+	# })
+	# output$plots_tab_scatter_y_ui <- renderUI({
+	# 	selectInput("plots_tab_scatter_y", "Select Y Axis", numericColumnNames)
+	# })
+	# output$plots_tab_scatter_color_ui <- renderUI({
+	# 	selectInput("plots_tab_scatter_color", "Select Color Axis", c(factorColumnNames, numericColumnNames))
+	# })
+	# output$plots_tab_scatter_checkbox_ui <- renderUI({
+	# 	prettySwitch("plots_tab_scatter_checkbox", "Factorize color axis input?", slim = TRUE)
+	# })
+	# output$plots_tab_bar_x_ui <- renderUI({
+	# 	selectInput("plots_tab_bar_x", "Select X Axis", factorColumnNames)
+	# })
+	# output$plots_tab_bar_y_ui <- renderUI({
+	# 	selectInput("plots_tab_bar_y", "Select Y Axis", numericColumnNames)
+	# })
+	# output$plots_tab_bar_color_ui <- renderUI({
+	# 	selectInput("plots_tab_bar_color", "Select Color Axis", factorColumnNames)
+	# })
+	analysisData <- data.frame()
+	numericAnalysisData <- data.frame()
+	factorAnalysisData <- data.frame()
+	numericColumnNames <- NULL
+	factorColumnNames <- NULL
 	output$sample_data_download <- downloadHandler(
 		filename = function() {
 			"sample_data.csv"
