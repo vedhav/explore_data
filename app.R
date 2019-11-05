@@ -156,12 +156,12 @@ plots_ui <- bs4TabItem(
 ui = tags$div(
 	tags$head(
 		tags$link(rel = "shortcut icon", type = "image/png", href = "vedha_space.png"),
+		tags$script("", src = 'https://www.googletagmanager.com/gtag/js?id=UA-151532997-2'),
 		tags$script(
 			"window.dataLayer = window.dataLayer || [];
 			function gtag(){dataLayer.push(arguments);}
 			gtag('js', new Date());
-			gtag('config', 'UA-151532997-2');",
-			src = 'https://www.googletagmanager.com/gtag/js?id=UA-151532997-2'
+			gtag('config', 'UA-151532997-2');"
 		)
 	),
 	useShinyjs(),
